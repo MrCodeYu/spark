@@ -1,0 +1,61 @@
+products:
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BitArray.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\BitArray.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\BloomFilter$Version.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\BloomFilter.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\BloomFilterImpl.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\CountMinSketch$Version.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\CountMinSketch.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\CountMinSketchImpl.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\IncompatibleMergeException.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\Murmur3_x86_32.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\Platform.class
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java -> D:\workspace\spark-2.0.2\common\sketch\target\scala-2.11\classes\org\apache\spark\util\sketch\Utils.class
+binary dependencies:
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BitArray.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+source dependencies:
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BitArray.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BitArray.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BitArray.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java -> D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java
+external dependencies:
+class names:
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BitArray.java -> org.apache.spark.util.sketch.BitArray
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> org.apache.spark.util.sketch.BloomFilter
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilter.java -> org.apache.spark.util.sketch.BloomFilter$Version
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\BloomFilterImpl.java -> org.apache.spark.util.sketch.BloomFilterImpl
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> org.apache.spark.util.sketch.CountMinSketch
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketch.java -> org.apache.spark.util.sketch.CountMinSketch$Version
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\CountMinSketchImpl.java -> org.apache.spark.util.sketch.CountMinSketchImpl
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\IncompatibleMergeException.java -> org.apache.spark.util.sketch.IncompatibleMergeException
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Murmur3_x86_32.java -> org.apache.spark.util.sketch.Murmur3_x86_32
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Platform.java -> org.apache.spark.util.sketch.Platform
+   D:\workspace\spark-2.0.2\common\sketch\src\main\java\org\apache\spark\util\sketch\Utils.java -> org.apache.spark.util.sketch.Utils

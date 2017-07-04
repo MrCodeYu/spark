@@ -1,0 +1,62 @@
+products:
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\BaseSuite.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\CommandBuilderUtilsSuite.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\LauncherServerSuite$1.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\LauncherServerSuite$2.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\LauncherServerSuite$TestClient.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\LauncherServerSuite.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\SparkSubmitOptionParserSuite$1.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\SparkSubmitOptionParserSuite$DummyParser.class
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> D:\workspace\spark-2.0.2\launcher\target\scala-2.11\test-classes\org\apache\spark\launcher\SparkSubmitOptionParserSuite.class
+binary dependencies:
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java -> C:\Users\Pan\.m2\repository\org\slf4j\jul-to-slf4j\1.7.16\jul-to-slf4j-1.7.16.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java -> C:\Users\Pan\.m2\repository\junit\junit\4.12\junit-4.12.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> C:\Users\Pan\.m2\repository\junit\junit\4.12\junit-4.12.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> C:\Users\Pan\.m2\repository\junit\junit\4.12\junit-4.12.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> C:\Program Files\Java\jdk1.8.0_101\jre\lib\rt.jar
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> C:\Users\Pan\.m2\repository\org\mockito\mockito-core\1.10.19\mockito-core-1.10.19.jar
+source dependencies:
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java
+external dependencies:
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java -> org.apache.spark.launcher.CommandBuilderUtils
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.ChildProcAppHandle
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherConnection
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherProtocol
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherProtocol$Hello
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherProtocol$Message
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherProtocol$SetAppId
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherProtocol$SetState
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherProtocol$Stop
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherServer
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.SparkAppHandle
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.SparkAppHandle$Listener
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.SparkAppHandle$State
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.SparkLauncher
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> org.apache.spark.launcher.CommandBuilderUtils
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> org.apache.spark.launcher.SparkLauncher
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> org.apache.spark.launcher.SparkSubmitCommandBuilder
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> org.apache.spark.launcher.SparkSubmitOptionParser
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> org.apache.spark.launcher.SparkSubmitOptionParser
+class names:
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\BaseSuite.java -> org.apache.spark.launcher.BaseSuite
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\CommandBuilderUtilsSuite.java -> org.apache.spark.launcher.CommandBuilderUtilsSuite
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherServerSuite
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherServerSuite$1
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherServerSuite$2
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\LauncherServerSuite.java -> org.apache.spark.launcher.LauncherServerSuite$TestClient
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitCommandBuilderSuite.java -> org.apache.spark.launcher.SparkSubmitCommandBuilderSuite
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> org.apache.spark.launcher.SparkSubmitOptionParserSuite
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> org.apache.spark.launcher.SparkSubmitOptionParserSuite$1
+   D:\workspace\spark-2.0.2\launcher\src\test\java\org\apache\spark\launcher\SparkSubmitOptionParserSuite.java -> org.apache.spark.launcher.SparkSubmitOptionParserSuite$DummyParser
