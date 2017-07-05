@@ -42,9 +42,11 @@ import org.apache.spark.util.{AccumulatorV2, Clock, SystemClock, Utils}
  * and statusUpdate, which tells it that one of its tasks changed state (e.g. finished).
   *
   * 调度TaskSchedulerImpl里单独一个TaskSet的tasks。TaskSetManager有以下功能：
-  * 跟踪每个task；如果task失败，进行不超过限制次数的重试；通过延迟调度处理这个TaskSet的本地性调度问题。
+  * ①跟踪每个task；
+  * ②如果task失败，进行不超过限制次数的重试；
+  * ③通过延迟调度处理这个TaskSet的本地性调度机制。
   * TaskSetManager的主要接口是resourceOffer，该接口询问TaskSet是否要在某个节点上运行，
-  * 或者是通过这个接口告诉TaskSetManager它的某个task状态改变了来及逆行状态更新，
+  * 并且通过这个接口告诉TaskSetManager它的某个task状态改变了来及逆行状态更新，
  *
  * THREADING: This class is designed to only be called from code with a lock on the
  * TaskScheduler (e.g. its event handlers). It should not be called from other threads.
