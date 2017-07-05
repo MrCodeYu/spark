@@ -170,9 +170,10 @@ private[spark] class TaskSchedulerImpl(
     logInfo("Adding task set " + taskSet.id + " with " + tasks.length + " tasks")
     this.synchronized {
       // 给每一个taskSet都会创建一个TaskSetManager
-      // TaskSetManager会执行它的任务的执行状况的监视和管理
+      // TaskSetManager会执行它的TaskSet任务的执行状况的监视和管理
       val manager = createTaskSetManager(taskSet, maxTaskFailures)
       val stage = taskSet.stageId
+      // 将taskSetManager加入到内存缓存中
       val stageTaskSets =
         taskSetsByStageIdAndAttempt.getOrElseUpdate(stage, new HashMap[Int, TaskSetManager])
       stageTaskSets(taskSet.stageAttemptId) = manager
@@ -260,13 +261,24 @@ private[spark] class TaskSchedulerImpl(
       availableCpus: Array[Int],
       tasks: Seq[ArrayBuffer[TaskDescription]]) : Boolean = {
     var launchedTask = false
+    // 遍历所有executor
     for (i <- 0 until shuffledOffers.size) {
       val execId = shuffledOffers(i).executorId
       val host = shuffledOffers(i).host
+      // 如果当前executor的可用CPU数量>每个task需要的CPU数量（默认是1）
       if (availableCpus(i) >= CPUS_PER_TASK) {
         try {
+          // 调用taskSetManager的resourceOffer，去找到在这个executor上，
+          // 就用这种本地级别，这个taskSet里的哪些task可以启动
+          // 遍历使用当前本地化级别，可以在该executor上启动的task
           for (task <- taskSet.resourceOffer(execId, host, maxLocality)) {
+            // 放入tasks这个二维数组，给制定的executor加上要启动的task
             tasks(i) += task
+            // 到这里为止，这就是task分配算法的实现，
+            // 我们尝试用本地化级别这种模型，去优化task的分配和启动，优先希望task能在最佳本地化位置启动
+            // 然后将task分配给executor。
+
+            // 将相应的分配信息加入到内存缓存
             val tid = task.taskId
             taskIdToTaskSetManager(tid) = taskSet
             taskIdToExecutorId(tid) = execId
@@ -274,6 +286,7 @@ private[spark] class TaskSchedulerImpl(
             executorsByHost(host) += execId
             availableCpus(i) -= CPUS_PER_TASK
             assert(availableCpus(i) >= 0)
+            // 标志为true
             launchedTask = true
           }
         } catch {
@@ -311,10 +324,21 @@ private[spark] class TaskSchedulerImpl(
     }
 
     // Randomly shuffle offers to avoid always placing tasks on the same set of workers.
+    // 首先将所有的executor打乱，尽量做到负载均衡
     val shuffledOffers = Random.shuffle(offers)
     // Build a list of tasks to assign to each worker.
+    // 针对workerOffer创建出需要的东西，例如tasks很重要，可以理解为一个二维数组，ArrayBuffer，
+    // 里面的元素又是一个ArrayBuffer，并且每个ArrayBuffer的数量是固定的，等于executor可用的CPU数量，
+    // 因为一个CPU上运行一个task。
     val tasks = shuffledOffers.map(o => new ArrayBuffer[TaskDescription](o.cores))
     val availableCpus = shuffledOffers.map(o => o.cores).toArray
+
+    /**
+      * 从rootPool中取出了排序的TaskSet
+      * rootPool是在TaskSchedulerImpl的initialize（）方法中根据调度模式（schedulerMode：FIFO,FAIR）创建的
+      * 所有提交的TaskSets首先会放入这个调度池中，
+      * 然后在执行task的分配算法，会从这个调度池中取出排好队的TaskSet。
+      */
     val sortedTaskSets = rootPool.getSortedTaskSetQueue
     for (taskSet <- sortedTaskSets) {
       logDebug("parentName: %s, name: %s, runningTasks: %s".format(
@@ -327,9 +351,23 @@ private[spark] class TaskSchedulerImpl(
     // Take each TaskSet in our scheduling order, and then offer it each node in increasing order
     // of locality levels so that it gets a chance to launch local tasks on all of them.
     // NOTE: the preferredLocality order: PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY
+    /**
+      * 这里是任务分配算法的核心：
+      * 双重for循环遍历所有taskSet，以及每一种本地化级别
+      * 本地化分为几种（从好到坏）：
+      * PROCESS_LOCAL： 进程本地化，rdd的partition和task进入一个executor内，速度快
+      * NODE_LOCAL: rdd的partition和task不在一个executor中，但在一个Worker节点上
+      * NO_PREF: 无 没有本地化级别
+      * RACK_LOCAL: 机架本地化 至少rdd的partition和task在一个机架上
+      * ANY: 任意的本地化级别
+      */
     var launchedTask = false
     for (taskSet <- sortedTaskSets; maxLocality <- taskSet.myLocalityLevels) {
       do {
+        // 对每个taskset从最好的本地化级别开始遍历；对当前taskset尝试使用每一种本地化级别，
+        //尝试优先使用最小的本地化级别，再将taskset的task在executor上进行启动。
+        // 如果启动不了，跳出这个do while，进入下一个本地化级别。
+        // 以此类推，知道将taskset在某个本地化级别下，让taskset的task全部在executor上启动。
         launchedTask = resourceOfferSingleTaskSet(
             taskSet, maxLocality, shuffledOffers, availableCpus, tasks)
       } while (launchedTask)
