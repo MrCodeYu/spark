@@ -47,6 +47,7 @@ private[spark] class CoarseGrainedExecutorBackend(
   extends ThreadSafeRpcEndpoint with ExecutorBackend with Logging {
 
   private[this] val stopping = new AtomicBoolean(false)
+  // executor在Driver返回成功注册executor后（RegisteredExecutor），被初始化
   var executor: Executor = null
   @volatile var driver: Option[RpcEndpointRef] = None
 
@@ -58,6 +59,7 @@ private[spark] class CoarseGrainedExecutorBackend(
     logInfo("Connecting to driver: " + driverUrl)
     rpcEnv.asyncSetupEndpointRefByURI(driverUrl).flatMap { ref =>
       // This is a very fast action so we can use "ThreadUtils.sameThread"
+      // 获得到driver的地址，也就是CoarseGrainedSchedulerBackend中DriverEndpoint的地址，并向它发送消息
       driver = Some(ref)
       ref.ask[Boolean](RegisterExecutor(executorId, self, hostname, cores, extractLogUrls))
     }(ThreadUtils.sameThread).onComplete {
@@ -76,6 +78,8 @@ private[spark] class CoarseGrainedExecutorBackend(
   }
 
   override def receive: PartialFunction[Any, Unit] = {
+    // driver 注册executor成功只有，会返回RegisteredExecutor，此时，CoarseGrainedExecutorBackend会创建executor对象
+    // 作为执行句柄，其实它的大部分功能都是基于executor实现的
     case RegisteredExecutor =>
       logInfo("Successfully registered with driver")
       try {
@@ -92,8 +96,10 @@ private[spark] class CoarseGrainedExecutorBackend(
       if (executor == null) {
         exitExecutor(1, "Received LaunchTask command but executor was null")
       } else {
+        // 反序列化task，
         val taskDesc = ser.deserialize[TaskDescription](data.value)
         logInfo("Got assigned task " + taskDesc.taskId)
+        // 用executor
         executor.launchTask(this, taskId = taskDesc.taskId, attemptNumber = taskDesc.attemptNumber,
           taskDesc.name, taskDesc.serializedTask)
       }
