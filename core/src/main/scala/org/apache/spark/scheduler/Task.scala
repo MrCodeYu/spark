@@ -68,6 +68,8 @@ private[spark] abstract class Task[T](
       attemptNumber: Int,
       metricsSystem: MetricsSystem): T = {
     SparkEnv.get.blockManager.registerTask(taskAttemptId)
+    // 创建TaskContext的对象，记录了task的上下文，
+    // 包括task执行的全局性数据，例如：task失败后重试几次，task属于哪个stage，task要处理rdd的哪个partition
     context = new TaskContextImpl(
       stageId,
       partitionId,
@@ -83,6 +85,10 @@ private[spark] abstract class Task[T](
       kill(interruptThread = false)
     }
     try {
+      // 调用抽象方法 runTask
+      // 调用到抽象方法意味着，这个类只是一个模板类，仅仅封装了一些子类需要的通用的数据和方法，
+      // 具体怎么实现这个方法，还需要子类自己实现
+      // Task子类有ShuffleMapTask和ResultTask等等。所以需要运行它们的方法，才能实现我们定义的算子和逻辑
       runTask(context)
     } catch {
       case e: Throwable =>
