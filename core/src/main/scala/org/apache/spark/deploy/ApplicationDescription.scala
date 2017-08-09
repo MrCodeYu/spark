@@ -19,6 +19,20 @@ package org.apache.spark.deploy
 
 import java.net.URI
 
+/**
+  *
+  * @param name
+  * @param maxCores
+  * @param memoryPerExecutorMB
+  * @param command 在StandaloneSchedulerBackend中，org.apache.spark.executor.CoarseGrainedExecutorBackend
+  *                这个类在Worker启动Executor的时候（Worker的消息LaunchExecutor中），会被作为进程启动起来
+  * @param appUiUrl
+  * @param eventLogDir
+  * @param eventLogCodec
+  * @param coresPerExecutor
+  * @param initialExecutorLimit
+  * @param user
+  */
 private[spark] case class ApplicationDescription(
     name: String,
     maxCores: Option[Int],
