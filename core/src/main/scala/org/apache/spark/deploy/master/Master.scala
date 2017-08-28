@@ -161,6 +161,7 @@ private[deploy] class Master(
           new FileSystemRecoveryModeFactory(conf, serializer)
         (fsFactory.createPersistenceEngine(), fsFactory.createLeaderElectionAgent(this))
       case "CUSTOM" =>
+        // test env
         val clazz = Utils.classForName(conf.get("spark.deploy.recoveryMode.factory"))
         val factory = clazz.getConstructor(classOf[SparkConf], classOf[Serializer])
           .newInstance(conf, serializer)
@@ -169,7 +170,6 @@ private[deploy] class Master(
       case _ =>
         // 如果没有设置spark.deploy.recoveryMode,丢失数据不能恢复，
         // 因为BlackHolePersistenceEngine的方法全部没有实现
-        // test env
         (new BlackHolePersistenceEngine(), new MonarchyLeaderAgent(this))
     }
     persistenceEngine = persistenceEngine_
