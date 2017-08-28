@@ -40,9 +40,11 @@ private[spark] trait SizeTracker {
   private val samples = new mutable.Queue[Sample]
 
   /** The average number of bytes per update between our last two samples. */
+  /** 我们最后两个样本之间的每次更新的平均字节数 */
   private var bytesPerUpdate: Double = _
 
   /** Total number of insertions and updates into the map since the last resetSamples(). */
+  /** 自上一次resetSamples（）以来，Map中的插入和更新总数 */
   private var numUpdates: Long = _
 
   /** The value of 'numUpdates' at which we will take our next sample. */
@@ -95,7 +97,9 @@ private[spark] trait SizeTracker {
    */
   def estimateSize(): Long = {
     assert(samples.nonEmpty)
+    // 本次总共插入的数据大小=本次插入的元素个数*平均元素大小
     val extrapolatedDelta = bytesPerUpdate * (numUpdates - samples.last.numUpdates)
+    // 上次插入后大小+本次插入的大小
     (samples.last.size + extrapolatedDelta).toLong
   }
 }

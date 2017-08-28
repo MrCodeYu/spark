@@ -86,17 +86,20 @@ private[spark] class MemoryStore(
 
   // Note: all changes to memory allocations, notably putting blocks, evicting blocks, and
   // acquiring or releasing unroll memory, must be synchronized on `memoryManager`!
-
+  // memoryStore维护的entries存放的是每个block的真实的数据了,每个block在内存中的数据用MemoryEntry代表
+  // 这是一个顺序的Map，当内存不足要从entries中移除数据的时候，会先将旧数据移出去
   private val entries = new LinkedHashMap[BlockId, MemoryEntry[_]](32, 0.75f, true)
 
   // A mapping from taskAttemptId to amount of memory used for unrolling a block (in bytes)
   // All accesses of this map are assumed to have manually synchronized on `memoryManager`
+  // 从taskAttemptId映射到用于展开块的内存量（以字节为单位）假设此映射的所有访问都在`memoryManager'上手动同步
   private val onHeapUnrollMemoryMap = mutable.HashMap[Long, Long]()
   // Note: off-heap unroll memory is only used in putIteratorAsBytes() because off-heap caching
   // always stores serialized values.
   private val offHeapUnrollMemoryMap = mutable.HashMap[Long, Long]()
 
   // Initial memory to request before unrolling any block
+  // 在展开任何 block 之前请求的初始内存
   private val unrollMemoryThreshold: Long =
     conf.getLong("spark.storage.unrollMemoryThreshold", 1024 * 1024)
 
@@ -160,12 +163,16 @@ private[spark] class MemoryStore(
 
   /**
    * Attempt to put the given block in memory store as values.
+    * 尝试将给定的块放在内存中作为值。
    *
    * It's possible that the iterator is too large to materialize and store in memory. To avoid
    * OOM exceptions, this method will gradually unroll the iterator while periodically checking
    * whether there is enough free memory. If the block is successfully materialized, then the
    * temporary unroll memory used during the materialization is "transferred" to storage memory,
    * so we won't acquire more memory than is actually needed to store the block.
+    * iterator有可能过大，导致于内存中存储不下。为了避免OOM，这个方法会逐渐展开这个iterator同时定期检查
+    * 是否还有足够内存可用。如果block成功被物化下来，则在实现存储过程中使用的临时展开内存会‘传输到’存储内存中，
+    * 所以我们不会获得比实际需要存储这个block更大的内存。
    *
    * @return in case of success, the estimated the estimated size of the stored data. In case of
    *         failure, return an iterator containing the values of the block. The returned iterator
@@ -186,22 +193,30 @@ private[spark] class MemoryStore(
     // Whether there is still enough memory for us to continue unrolling this block
     var keepUnrolling = true
     // Initial per-task memory to request for unrolling blocks (bytes).
+    // 块展开的出事内存
     val initialMemoryThreshold = unrollMemoryThreshold
     // How often to check whether we need to request more memory
+    // 每展开多少个iterator中的元素，就检查一次内存
     val memoryCheckPeriod = 16
     // Memory currently reserved by this task for this particular unrolling operation
+    // 由task为该特定展开操作保留的内存
     var memoryThreshold = initialMemoryThreshold
     // Memory to request as a multiple of current vector size
+    // memory 请求作为当前矢量大小的倍数
     val memoryGrowthFactor = 1.5
     // Keep track of unroll memory used by this particular block / putIterator() operation
+    // 展开已经用到的内存大小
     var unrollMemoryUsedByThisBlock = 0L
     // Underlying vector for unrolling the block
+    // 用于展开 block 的底层向量
     var vector = new SizeTrackingVector[T]()(classTag)
 
     // Request enough memory to begin unrolling
+    // 将taskId和占用的展开操作的内存映射放入内存结构
     keepUnrolling =
       reserveUnrollMemoryForThisTask(blockId, initialMemoryThreshold, MemoryMode.ON_HEAP)
 
+    // unrollMemoryUsedByThisBlock赋值为已经分配的内存值
     if (!keepUnrolling) {
       logWarning(s"Failed to reserve initial memory threshold of " +
         s"${Utils.bytesToString(initialMemoryThreshold)} for computing block $blockId in memory.")
@@ -211,9 +226,13 @@ private[spark] class MemoryStore(
 
     // Unroll this block safely, checking whether we have exceeded our threshold periodically
     while (values.hasNext && keepUnrolling) {
+      // 将iterator中的数据逐个放入到vector中
       vector += values.next()
+      // 已经展开的元素 % 每16个元素检查一次
       if (elementsUnrolled % memoryCheckPeriod == 0) {
+        // 如果是16的倍数
         // If our vector's size has exceeded the threshold, request more memory
+        // 返回现在vector估计的大小，判断vector是否已经超过阈值
         val currentSize = vector.estimateSize()
         if (currentSize >= memoryThreshold) {
           val amountToRequest = (currentSize * memoryGrowthFactor - memoryThreshold).toLong
@@ -403,12 +422,17 @@ private[spark] class MemoryStore(
     }
   }
 
+  /** 从MemoryStore中获取block的数据,以字节形式（序列化后就是字节）传回 */
   def getBytes(blockId: BlockId): Option[ChunkedByteBuffer] = {
+    // 多线程访问并发同步，尝试从内存中获取block数据
     val entry = entries.synchronized { entries.get(blockId) }
     entry match {
+        // 没获取到，返回null
       case null => None
+        // 获取到非序列化数据，抛出异常
       case e: DeserializedMemoryEntry[_] =>
         throw new IllegalArgumentException("should only call getBytes on serialized blocks")
+        // 获取到序列化数据，直接返回数据
       case SerializedMemoryEntry(bytes, _, _) => Some(bytes)
     }
   }
@@ -417,8 +441,10 @@ private[spark] class MemoryStore(
     val entry = entries.synchronized { entries.get(blockId) }
     entry match {
       case null => None
+        // 如果序列化了，报错
       case e: SerializedMemoryEntry[_] =>
         throw new IllegalArgumentException("should only call getValues on deserialized blocks")
+        // 如果非序列化，返回
       case DeserializedMemoryEntry(values, _, _) =>
         val x = Some(values)
         x.map(_.iterator)
@@ -560,7 +586,10 @@ private[spark] class MemoryStore(
 
   /**
    * Reserve memory for unrolling the given block for this task.
+    * 为这个task展开给定block保留内存
    *
+    * 为task保留展开内存
+    *
    * @return whether the request is granted.
    */
   def reserveUnrollMemoryForThisTask(

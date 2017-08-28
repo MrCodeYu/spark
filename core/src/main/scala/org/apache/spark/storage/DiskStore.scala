@@ -85,6 +85,7 @@ private[spark] class DiskStore(conf: SparkConf, diskManager: DiskBlockManager) e
 
   def getBytes(blockId: BlockId): ChunkedByteBuffer = {
     val file = diskManager.getFile(blockId.name)
+    // DiskStore底层用的java nio
     val channel = new RandomAccessFile(file, "r").getChannel
     Utils.tryWithSafeFinally {
       // For small files, directly read rather than memory map

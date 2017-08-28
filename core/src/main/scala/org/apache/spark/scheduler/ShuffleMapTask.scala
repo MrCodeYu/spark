@@ -90,7 +90,8 @@ private[spark] class ShuffleMapTask(
       // 执行完了我们定义的算子或函数，相当于是针对rdd的partition进行了处理，处理之后的结果数据都是通过ShuffleWriter，
       // 经过HashPartitioner分区之后，写入自己对应的分区bucket
       writer.write(rdd.iterator(partition, context).asInstanceOf[Iterator[_ <: Product2[Any, Any]]])
-      // 最后返回结果
+      // 最后返回结果,  MapStatus里封装了ShuffleMapTask计算后的数据封装在哪里,其实就是BlockManager相关的信息,
+      // BlockManager是Spark底层内存、数据、磁盘的管理组件
       writer.stop(success = true).get
     } catch {
       case e: Exception =>

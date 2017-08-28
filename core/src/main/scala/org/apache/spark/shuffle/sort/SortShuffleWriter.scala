@@ -48,15 +48,20 @@ private[spark] class SortShuffleWriter[K, V, C](
   private val writeMetrics = context.taskMetrics().shuffleWriteMetrics
 
   /** Write a bunch of records to this task's output */
+  /** 将buntch里的所有records写到task的输出中 */
   override def write(records: Iterator[Product2[K, V]]): Unit = {
+    // 判断是否需要本地聚合？例如本地有(hello,1), (hello,1),那么会先在本地聚合成(hello,2)
     sorter = if (dep.mapSideCombine) {
       require(dep.aggregator.isDefined, "Map-side combine without Aggregator specified!")
+      // 如果需要聚合，在这里执行本地聚合
       new ExternalSorter[K, V, C](
         context, dep.aggregator, Some(dep.partitioner), dep.keyOrdering, dep.serializer)
     } else {
       // In this case we pass neither an aggregator nor an ordering to the sorter, because we don't
       // care whether the keys get sorted in each partition; that will be done on the reduce side
       // if the operation being run is sortByKey.
+      // 在这种情况下，我们既不将聚合器也不传递给分拣机，因为我们不关心每个分区中的键是否被排序;
+      // 如果正在运行的操作是sortByKey，那么这将在reduce方面完成。
       new ExternalSorter[K, V, V](
         context, aggregator = None, Some(dep.partitioner), ordering = None, dep.serializer)
     }

@@ -92,6 +92,7 @@ private[spark] class CoarseGrainedExecutorBackend(
     case RegisterExecutorFailed(message) =>
       exitExecutor(1, "Slave registration failed: " + message)
 
+      // data 是序列化的task
     case LaunchTask(data) =>
       if (executor == null) {
         exitExecutor(1, "Received LaunchTask command but executor was null")
@@ -142,6 +143,7 @@ private[spark] class CoarseGrainedExecutorBackend(
   }
 
   override def statusUpdate(taskId: Long, state: TaskState, data: ByteBuffer) {
+    // 这个方法会发送StatusUpdate消息给CoarseGrainedSchedulerBackend，告知这个task执行结束的时间
     val msg = StatusUpdate(executorId, taskId, state, data)
     driver match {
       case Some(driverRef) => driverRef.send(msg)

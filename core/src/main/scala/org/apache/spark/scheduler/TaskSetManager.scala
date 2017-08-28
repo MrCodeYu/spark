@@ -417,6 +417,10 @@ private[spark] class TaskSetManager(
    * would be adjusted by delay scheduling algorithm or it will be with a special
    * NO_PREF locality which will be not modified
    *
+    * 该方法大致的意思是：
+    * 会去判断这个executor在这个本地化级别，之前的等待时间是多少，
+    * 如果本地化级别在等待时间的范围内，我们认为这个task在这个executor上可以在这个本地化级别下启动。
+    *
    * @param execId the executor Id of the offered resource
    * @param host  the host Id of the offered resource
    * @param maxLocality the maximum locality we want to schedule the tasks at

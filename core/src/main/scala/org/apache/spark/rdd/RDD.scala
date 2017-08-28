@@ -275,11 +275,17 @@ abstract class RDD[T: ClassTag](
    * Internal method to this RDD; will read from cache if applicable, or otherwise compute it.
    * This should ''not'' be called by users directly, but is available for implementors of custom
    * subclasses of RDD.
+    *
+    * 先persist()，再checkpoint，
+    * 执行到该rdd的iterator后，会发现 storageLevel != StorageLevel.NONE
+    * 那么就会通过 blockManager 去获取数据，此时会发现blockManager获取不到数据（第一次执行），
+    * 那么还是会第一次计算这个rdd的数据
    */
   final def iterator(split: Partition, context: TaskContext): Iterator[T] = {
     if (storageLevel != StorageLevel.NONE) {
       getOrCompute(split, context)
     } else {
+      // 在这里执行RDD partition的计算
       computeOrReadCheckpoint(split, context)
     }
   }
@@ -310,12 +316,14 @@ abstract class RDD[T: ClassTag](
 
   /**
    * Compute an RDD partition or read it from a checkpoint if the RDD is checkpointing.
+    * 计算一个RDD的partition,或者如果这个RDDcheckpoint了,就从RDD的checkpoint里读取
    */
   private[spark] def computeOrReadCheckpoint(split: Partition, context: TaskContext): Iterator[T] =
   {
     if (isCheckpointedAndMaterialized) {
       firstParent[T].iterator(split, context)
     } else {
+      // 如果没有compute,就计算;以MapPartitionsRDD为例
       compute(split, context)
     }
   }

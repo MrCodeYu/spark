@@ -67,6 +67,8 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
   // must be protected by `CoarseGrainedSchedulerBackend.this`. Besides, `executorDataMap` should
   // only be modified in `DriverEndpoint.receive/receiveAndReply` with protection by
   // `CoarseGrainedSchedulerBackend.this`.
+  // executorDataMap的数据是CoarseGrainedExecutorBackend的onStart方法运行的时候，给Driver发送消息
+  // RegisterExecutor的时候，放入的传过来的Executor信息数据
   private val executorDataMap = new HashMap[String, ExecutorData]
 
   // Number of executors requested from the cluster manager that have not registered yet
@@ -120,6 +122,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     }
 
     override def receive: PartialFunction[Any, Unit] = {
+      // 在task执行完之后，CoraseGrainedExecutorBackend会发送消息告知Driver某个task已经执行完成
       case StatusUpdate(executorId, taskId, state, data) =>
         scheduler.statusUpdate(taskId, state, data.value)
         if (TaskState.isFinished(state)) {
@@ -149,8 +152,10 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
 
     override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
 
+      // CoarseGrainedExecutorBackend在被启动时，向Driver注册Executor
       case RegisterExecutor(executorId, executorRef, hostname, cores, logUrls) =>
         if (executorDataMap.contains(executorId)) {
+          // 判断这个executor是否是重复注册
           executorRef.send(RegisterExecutorFailed("Duplicate executor ID: " + executorId))
           context.reply(true)
         } else {
@@ -225,6 +230,8 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
       val workOffers = activeExecutors.map { case (id, executorData) =>
         new WorkerOffer(id, executorData.executorHost, executorData.freeCores)
       }.toSeq
+      // 在这里 CoarseGrainedSchedulerBackend相当于把所有的WorkOffers（封装的Executor）都封装好给TaskSchedulerImpl，
+      // 让TaskSchedulerImpl自己去决定在哪个Executor上运行Task
       launchTasks(scheduler.resourceOffers(workOffers))
     }
 
@@ -255,6 +262,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     // Launch tasks returned by a set of resource offers
     // 根据分配好的情况，在executor上启动对应的task。
     private def launchTasks(tasks: Seq[Seq[TaskDescription]]) {
+      // seq的flatten方法就是扁平化，和flatMap一个意思
       for (task <- tasks.flatten) {
         // 首先将每个executor要执行的task信息序列化
         val serializedTask = ser.serialize(task)

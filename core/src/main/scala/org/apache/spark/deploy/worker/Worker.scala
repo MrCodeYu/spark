@@ -458,6 +458,7 @@ private[deploy] class Worker(
               appDir.getAbsolutePath()
             }.toSeq)
           appDirectories(appId) = appLocalDirs
+          // command里封装了启动CoarseGrainedExecutorBackend
           val manager = new ExecutorRunner(
             appId,
             execId,
@@ -475,6 +476,9 @@ private[deploy] class Worker(
             conf,
             appLocalDirs, ExecutorState.RUNNING)
           executors(appId + "/" + execId) = manager
+          // 启动ExecutorRunner这个线程，在这里会去新建command里指定的CoarseGrainedExecutorBackend
+          // 补充：新建CoarseGrainedExecutorBackend的时候，会调用onStart方法，该方法会新建对象Executor，
+          //      在Executor的对象中，会将每个task封装成一个TaskRunner，丢到线程池里去运行。
           manager.start()
           coresUsed += cores_
           memoryUsed += memory_

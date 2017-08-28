@@ -89,6 +89,7 @@ private[spark] class TaskSchedulerImpl(
   val nextTaskId = new AtomicLong(0)
 
   // Number of tasks running on each executor
+  // 每个executor上运行了多少tasks
   private val executorIdToTaskCount = new HashMap[String, Int]
 
   def runningTasksByExecutors(): Map[String, Int] = executorIdToTaskCount.toMap
@@ -177,6 +178,7 @@ private[spark] class TaskSchedulerImpl(
       val stageTaskSets =
         taskSetsByStageIdAndAttempt.getOrElseUpdate(stage, new HashMap[Int, TaskSetManager])
       stageTaskSets(taskSet.stageAttemptId) = manager
+
       val conflictingTaskSet = stageTaskSets.exists { case (_, ts) =>
         ts.taskSet != taskSet && !ts.isZombie
       }
@@ -254,6 +256,15 @@ private[spark] class TaskSchedulerImpl(
       .format(manager.taskSet.id, manager.parent.name))
   }
 
+  /**
+    *
+    * @param taskSet taskSet
+    * @param maxLocality  这个taskSet所有的本地化级别里的某一个级别
+    * @param shuffledOffers 打乱顺序的所有的executor
+    * @param availableCpus  每个executor有多少可用的cpu
+    * @param tasks  数据结构：executor数（executor core数）
+    * @return
+    */
   private def resourceOfferSingleTaskSet(
       taskSet: TaskSetManager,
       maxLocality: TaskLocality,
@@ -285,6 +296,8 @@ private[spark] class TaskSchedulerImpl(
             executorIdToTaskCount(execId) += 1
             executorsByHost(host) += execId
             availableCpus(i) -= CPUS_PER_TASK
+            // 问题 如果task都被分到这个节点上，这个节点上的CPU可能是不够的；
+            // 问题 如果partition有200个partition，但是CPU只有20个，怎么分配
             assert(availableCpus(i) >= 0)
             // 标志为true
             launchedTask = true
@@ -305,6 +318,9 @@ private[spark] class TaskSchedulerImpl(
    * Called by cluster manager to offer resources on slaves. We respond by asking our active task
    * sets for tasks in order of priority. We fill each node with tasks in a round-robin manner so
    * that tasks are balanced across the cluster.
+    *
+    * 由集群管理器调用，给slaves分配资源。我们通过优先级的顺序询问活动任务集来处理任务。我们通过轮询的方式给每个
+    * 节点分配任务，所以task可以均衡的分布在集群上。
    */
   def resourceOffers(offers: Seq[WorkerOffer]): Seq[Seq[TaskDescription]] = synchronized {
     // Mark each slave as alive and remember its hostname
@@ -330,7 +346,9 @@ private[spark] class TaskSchedulerImpl(
     // 针对workerOffer创建出需要的东西，例如tasks很重要，可以理解为一个二维数组，ArrayBuffer，
     // 里面的元素又是一个ArrayBuffer，并且每个ArrayBuffer的数量是固定的，等于executor可用的CPU数量，
     // 因为一个CPU上运行一个task。
+    // 多少个可用的executor_arr(这个executor上多少个core_arrbuffer())
     val tasks = shuffledOffers.map(o => new ArrayBuffer[TaskDescription](o.cores))
+    // Seq(每个executor的CPU数量)
     val availableCpus = shuffledOffers.map(o => o.cores).toArray
 
     /**
@@ -362,10 +380,11 @@ private[spark] class TaskSchedulerImpl(
       * ANY: 任意的本地化级别
       */
     var launchedTask = false
+    // taskSet.myLocalityLevels包含了这个taskSet的task的所有本地化等级
     for (taskSet <- sortedTaskSets; maxLocality <- taskSet.myLocalityLevels) {
       do {
         // 对每个taskset从最好的本地化级别开始遍历；对当前taskset尝试使用每一种本地化级别，
-        //尝试优先使用最小的本地化级别，再将taskset的task在executor上进行启动。
+        // 尝试优先使用最小的本地化级别，再将taskset的task在executor上进行启动。
         // 如果启动不了，跳出这个do while，进入下一个本地化级别。
         // 以此类推，知道将taskset在某个本地化级别下，让taskset的task全部在executor上启动。
         launchedTask = resourceOfferSingleTaskSet(
@@ -384,6 +403,8 @@ private[spark] class TaskSchedulerImpl(
     var reason: Option[ExecutorLossReason] = None
     synchronized {
       try {
+        // 我们调试的时候经常会遇到task lost，这个时候是因为各种原因导致任务失败
+        // 这里会移除executor，将其加入失败队列
         if (state == TaskState.LOST && taskIdToExecutorId.contains(tid)) {
           // We lost this entire executor, so remember that it's gone
           val execId = taskIdToExecutorId(tid)
@@ -396,7 +417,9 @@ private[spark] class TaskSchedulerImpl(
           }
         }
         taskIdToTaskSetManager.get(tid) match {
+          // 获取这个task的taskSet
           case Some(taskSet) =>
+            // 如果task的状态是结束了（结束状态包括FINISHED, FAILED, KILLED, LOST），从内存缓存中移除掉这个task
             if (TaskState.isFinished(state)) {
               taskIdToTaskSetManager.remove(tid)
               taskIdToExecutorId.remove(tid).foreach { execId =>
@@ -405,6 +428,7 @@ private[spark] class TaskSchedulerImpl(
                 }
               }
             }
+            // 如果task的状态是正常结束FINISH，做相应的处理
             if (state == TaskState.FINISHED) {
               taskSet.removeRunningTask(tid)
               taskResultGetter.enqueueSuccessfulTask(taskSet, tid, serializedData)

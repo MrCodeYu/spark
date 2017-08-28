@@ -86,6 +86,7 @@ private[spark] class ShuffleMapStage(
   def isAvailable: Boolean = _numAvailableOutputs == numPartitions
 
   /** Returns the sequence of partition ids that are missing (i.e. needs to be computed). */
+  // 注意：只有在map阶段的时候，数据才会往本地磁盘上缓存，transformation阶段是不会在磁盘缓存数据的
   override def findMissingPartitions(): Seq[Int] = {
     val missing = (0 until numPartitions).filter(id => outputLocs(id).isEmpty)
     assert(missing.size == numPartitions - _numAvailableOutputs,

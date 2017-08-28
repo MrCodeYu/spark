@@ -41,6 +41,7 @@ import org.apache.spark.internal.Logging
  * @param classTag the block's [[ClassTag]], used to select the serializer
  * @param tellMaster whether state changes for this block should be reported to the master. This
  *                   is true for most blocks, but is false for broadcast blocks.
+  *                  这个块在状态变化的时候是否告诉master？绝大多数block是需要报告的，但broadcast的blocks不用告诉master
  */
 private[storage] class BlockInfo(
     val level: StorageLevel,

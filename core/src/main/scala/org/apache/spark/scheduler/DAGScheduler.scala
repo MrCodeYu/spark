@@ -942,7 +942,7 @@ class DAGScheduler(
       SparkListenerJobStart(job.jobId, jobSubmissionTime, stageInfos, properties))
     // 使用submitStage(finalStage)提交finalStage
     // 这个方法的调用会导致第一个stage提交，
-    // 并且所有的stage都放入到waitingStages内存结构中
+    // 主要目的：把所有的stage都放入到waitingStages内存结构中
     submitStage(finalStage)
 
     // 提交等待的stage
@@ -1027,13 +1027,14 @@ class DAGScheduler(
   /** Called when stage's parents are available and we can now do its task. */
   // 在这个stage的父stage们都已经完成，我们就开始运行这个stage的task
   // 提交stage，为stage创建task，task数量跟partition数量相同
+  // job在第一次运行的时候，传入的就是最初的那个stage
   private def submitMissingTasks(stage: Stage, jobId: Int) {
     logDebug("submitMissingTasks(" + stage + ")")
     // Get our pending tasks and remember them in our pendingTasks entry
     stage.pendingPartitions.clear()
 
     // First figure out the indexes of partition ids to compute.
-    // 首先，找出所有需要计算的partition的ids,即创建task的数量
+    // 首先，找出所有需要计算的partition的id的集合,即创建task的数量
     val partitionsToCompute: Seq[Int] = stage.findMissingPartitions()
 
     // Use the scheduling pool, job group, description, etc. from an ActiveJob associated
@@ -1062,11 +1063,11 @@ class DAGScheduler(
     val taskIdToLocations: Map[Int, Seq[TaskLocation]] = try {
       stage match {
         case s: ShuffleMapStage =>
-
-          /**
-            * id：partition id
-            * stage.rdd:stage最后一个rdd
-            */
+          // id：partition id
+          // stage.rdd:stage最后一个rdd
+          // 判断stage最后一个rdd的某个task的最佳位置：判断这个rdd的partition是否cache，若没有cache是否checkpoint，
+          // 若没有checkpoint寻找partition的父partition是否cache或checkpoint，递归往前找，如果找到有cache或checkpoint，
+          // 返回这个partition的最佳位置给stage最后一个rdd的这个partition用。返回(partitionId,Seq(loc))
           partitionsToCompute.map { id => (id, getPreferredLocs(stage.rdd, id))}.toMap
         case s: ResultStage =>
           val job = s.activeJob.get
@@ -1125,7 +1126,7 @@ class DAGScheduler(
         return
     }
 
-    // 为stage创建指定数量的task
+    // 为stage创建指定数量的task,task数量是分片数
     val tasks: Seq[Task[_]] = try {
       // 给每一个partition创建一个task
       stage match {

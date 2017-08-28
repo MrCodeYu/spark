@@ -55,6 +55,11 @@ private[spark] class BlockResult(
  * retrieving blocks both locally and remotely into various stores (memory, disk, and off-heap).
  *
  * Note that [[initialize()]] must be called before the BlockManager is usable.
+  *
+  * BlockManager运行在每个节点上（包括Driver和Executor），它提供了本地或者远程存和取的功能接口，
+  * 它支持内存，磁盘，tachyon（堆外存储）
+  *
+  * 注意：在调用BlockManager之前，必须先调用initialize()
  */
 private[spark] class BlockManager(
     executorId: String,
@@ -112,6 +117,7 @@ private[spark] class BlockManager(
     }
   }
 
+  // 在initialize()中为这个BlockManager创建了blockManagerId
   var blockManagerId: BlockManagerId = _
 
   // Address of the server that serves this executor's shuffle files. This is either an external
@@ -159,6 +165,12 @@ private[spark] class BlockManager(
     blockTransferService.init(this)
     shuffleClient.init(appId)
 
+    // blockTransferService用于进行远程block数据传输的Service
+    // 为当前这个BlockManager创建自己的BlockManagerId，用到的参数有：
+    // executorId： 因为每个BlockManager都会关联自己唯一的executor
+    // blockTransferService的hostname，即当前的主机名
+    // blockTransferService的port，端口号
+    // 所以从BlockManagerId的初始化可以看出，一个BlockManager是通过一个节点上的executor来唯一标识的
     blockManagerId = BlockManagerId(
       executorId, blockTransferService.hostName, blockTransferService.port)
 
@@ -169,6 +181,7 @@ private[spark] class BlockManager(
       blockManagerId
     }
 
+    // 使用BlockManagerMasterEndpoint的引用，向BlockManagerMasterEndpoint进行BlockManager的注册
     master.registerBlockManager(blockManagerId, maxMemory, slaveEndpoint)
 
     // Register Executors' configuration with the local shuffle service, if one should exist.
@@ -477,31 +490,45 @@ private[spark] class BlockManager(
 
   /**
    * Get block from the local block manager as serialized bytes.
+    * 从本地block manager获取序列化字节格式的block
    *
    * Must be called while holding a read lock on the block.
    * Releases the read lock upon exception; keeps the read lock upon successful return.
+    *
+    * @param blockId 块的ID
+    * @param info blockInfo，里面有block的存储等级等信息
    */
   private def doGetLocalBytes(blockId: BlockId, info: BlockInfo): ChunkedByteBuffer = {
     val level = info.level
     logDebug(s"Level for block $blockId is $level")
     // In order, try to read the serialized bytes from memory, then from disk, then fall back to
     // serializing in-memory objects, and, finally, throw an exception if the block does not exist.
+    // 为了顺序，尝试从内存中读取序列化的字节，然后从磁盘读取序列化的字节，然后回到序列化内存中的对象，最后如果该块不存在则抛出异常。
+    // 如果存储等级中标志 反序列化
     if (level.deserialized) {
       // Try to avoid expensive serialization by reading a pre-serialized copy from disk:
+      // 通过从磁盘读取预序列化的副本，尽量避免昂贵的序列化：
+      // 如果这个block的存储等级有DISK，判断这个blockManager中distStore是否存储了这个block
       if (level.useDisk && diskStore.contains(blockId)) {
         // Note: we purposely do not try to put the block back into memory here. Since this branch
         // handles deserialized blocks, this block may only be cached in memory as objects, not
         // serialized bytes. Because the caller only requested bytes, it doesn't make sense to
         // cache the block's deserialized objects since that caching may not have a payoff.
+        // 如果存储了，直接从内存中取出这个block的字节信息
         diskStore.getBytes(blockId)
+        // 判断存储结构中是否是内存存储，并且memoryStore中存储了这个block
       } else if (level.useMemory && memoryStore.contains(blockId)) {
         // The block was not found on disk, so serialize an in-memory copy:
+        // 在磁盘上找不到该块，因此序列化内存中的副本：
         serializerManager.dataSerializeWithExplicitClassTag(
           blockId, memoryStore.getValues(blockId).get, info.classTag)
       } else {
+        // 磁盘内存都没有，抛出异常
         handleLocalReadFailure(blockId)
       }
     } else {  // storage level is serialized
+      // 存储等级标志序列化
+      // 按照顺序，先从内存中取，再从磁盘中取，如果都没有，抛出异常
       if (level.useMemory && memoryStore.contains(blockId)) {
         memoryStore.getBytes(blockId).get
       } else if (level.useDisk && diskStore.contains(blockId)) {
@@ -530,31 +557,44 @@ private[spark] class BlockManager(
   /**
    * Return a list of locations for the given block, prioritizing the local machine since
    * multiple block managers can share the same host.
+    *
+    * 返回传入的 block 所在的位置列表，优先本地机器位置
    */
   private def getLocations(blockId: BlockId): Seq[BlockManagerId] = {
+    // 返回blockId对应的所有的BlockManagerId
     val locs = Random.shuffle(master.getLocations(blockId))
+    // Seq.partition方法，根据条件返回两个集合，第一个集合是符合条件的记录集合，第二个集合是不符合条件的记录集合
+    // 第一个集合和本地的，因为当前BlockManager的host等于block存储的BlockManager的Id
     val (preferredLocs, otherLocs) = locs.partition { loc => blockManagerId.host == loc.host }
+    // 将本地的BlockManagerId集合和其他节点上的BlockManagerId合并
     preferredLocs ++ otherLocs
   }
 
   /**
    * Get block from remote block managers as serialized bytes.
+    *
+    * 从远程获取字节形式（序列化后是字节形式）的block
    */
   def getRemoteBytes(blockId: BlockId): Option[ChunkedByteBuffer] = {
     logDebug(s"Getting remote block $blockId")
     require(blockId != null, "BlockId is null")
     var runningFailureCount = 0
     var totalFailureCount = 0
+    // 获取这个 block 的位置列表，优先本地机器（这个blocku所在的executor列表）
     val locations = getLocations(blockId)
+    // 这个获取block的可失败次数 等于 这个block在几个executor上存储了
     val maxFetchFailures = locations.size
     var locationIterator = locations.iterator
     while (locationIterator.hasNext) {
+      // 得到这个 block 存储的一个位置
       val loc = locationIterator.next()
       logDebug(s"Getting remote block $blockId from $loc")
       val data = try {
+        // 通过 BlockTransferService 从loc这个 executor 中获取到这个 block 的数据
         blockTransferService.fetchBlockSync(
           loc.host, loc.port, loc.executorId, blockId.toString).nioByteBuffer()
       } catch {
+        // 如果失败，失败次数 +1，判断如果总的失败次数>block的副本数，报错
         case NonFatal(e) =>
           runningFailureCount += 1
           totalFailureCount += 1
@@ -846,6 +886,8 @@ private[spark] class BlockManager(
     require(blockId != null, "BlockId is null")
     require(level != null && level.isValid, "StorageLevel is null or invalid")
 
+    // 为要写入的 block 创建一个blockInfo，
+    // 如果成功将这个blockId-blockInfo放到内存结构中，返回创建的这个BlockInfo，否则返回None
     val putBlockInfo = {
       val newInfo = new BlockInfo(level, classTag, tellMaster)
       if (blockInfoManager.lockNewBlockForWriting(blockId, newInfo)) {
@@ -907,8 +949,10 @@ private[spark] class BlockManager(
   /**
    * Put the given block according to the given level in one of the block stores, replicating
    * the values if necessary.
+    * 将给定的block按照给定的级别存储起来，如果必要会备份
    *
    * If the block already exists, this method will not overwrite it.
+    * 如果这个块已经存在，这个方法不会覆盖掉已有的块
    *
    * @param keepReadLock if true, this method will hold the read lock when it returns (even if the
    *                     block already exists). If false, this method will hold no locks when it
@@ -931,7 +975,10 @@ private[spark] class BlockManager(
       if (level.useMemory) {
         // Put it in memory first, even if it also has useDisk set to true;
         // We will drop it to disk later if the memory store can't hold it.
+        // 先将block存储到内存中，即使它设置了useDisk为true；
+        // 如果内存大小不够存储这个block，我们会将其放到磁盘上。
         if (level.deserialized) {
+          // 如果不用序列化
           memoryStore.putIteratorAsValues(blockId, iterator(), classTag) match {
             case Right(s) =>
               size = s
@@ -978,6 +1025,7 @@ private[spark] class BlockManager(
         // Now that the block is in either the memory or disk store, tell the master about it.
         info.size = size
         if (tellMaster && info.tellMaster) {
+          // 告诉BlockManagerMansterEndpoint更新block信息
           reportBlockStatus(blockId, putBlockStatus)
         }
         addUpdatedBlockStatusToTaskMetrics(blockId, putBlockStatus)
