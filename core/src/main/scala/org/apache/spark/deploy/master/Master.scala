@@ -169,6 +169,7 @@ private[deploy] class Master(
       case _ =>
         // 如果没有设置spark.deploy.recoveryMode,丢失数据不能恢复，
         // 因为BlackHolePersistenceEngine的方法全部没有实现
+        // test env
         (new BlackHolePersistenceEngine(), new MonarchyLeaderAgent(this))
     }
     persistenceEngine = persistenceEngine_
