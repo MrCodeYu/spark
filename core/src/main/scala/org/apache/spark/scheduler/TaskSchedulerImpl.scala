@@ -42,6 +42,9 @@ import org.apache.spark.util.{AccumulatorV2, ThreadUtils, Utils}
  * It can also work with a local setup by using a [[LocalSchedulerBackend]] and setting
  * isLocal to true. It handles common logic, like determining a scheduling order across jobs, waking
  * up to launch speculative tasks, etc.
+  * 通过操纵SchedulerBackend来调度不同种类的cluster（standalone，mesos，yarn）调度task，也可以使用LocalSchedulerBackend
+  * 并且设置isLocal=true赖在本地模式下工作。它负责处理通用逻辑，比如说决定多个Job的调度顺序，启动推测任务执行。
+  * 客户端应当先调用initialize()和start()，然后runTasks方法来提交task sets。
  *
  * Clients should first call initialize() and start(), then submit task sets through the
  * runTasks method.

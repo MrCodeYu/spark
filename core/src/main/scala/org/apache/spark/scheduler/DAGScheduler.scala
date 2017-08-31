@@ -45,6 +45,21 @@ import org.apache.spark.storage.BlockManagerMessages.BlockManagerHeartbeat
 import org.apache.spark.util._
 
 /**
+  *
+  * 实现了面向Stage的调度机制的高层次调度层。他会为每个job构造一个Stage的DAG，跟踪RDD和Stage的输出是否被物化（写入磁盘或内存），
+  * 寻找一个最有的调度机制来运行job。接下来它会将stage封装成TaskSet来提交给底层的TaskScheduler实现类，来让他们（tasks）运行在集群上。
+  * 一个TaskSet包含完全独立的任务，可以根据已经在集群上的数据立即运行（eg. 上个阶段的map输出文件），当然，如果之前的数据丢失，运行会失败。
+  *
+  * Spark的stages是由shuffle的边界来划分的。每个stage的RDD的窄依赖算子会一起进入到一组tasks中，但是有shuffle依赖的算子要求有多个stage，
+  * （map写数据，reduce读数据），最后，每个stage和另一个stage之间的依赖都是shuffle dependencies，在一个stage内部可能会计算一连串
+  * 的算子。事实上，整个pipeline的算子在RDD.compute()中会被计算。
+  *
+  * 除了划分stages的DAG，DAGScheduler会根据当前数据缓存的位置决定每个task运行的最佳位置，并且将他们发送到低层次TaskScheduler。
+  * 此外，它还处理由于stages之间shuffle输出文件丢失造成的失败，在这种情况下，之前运行过的stage可能需要被重新提交；
+  * 注意，一个stage之中，并非是shuffle文件丢失造成的失败，是由TaskScheduler来处理的，它会重试几次每个task，超过次数后，才会取消整个stage。
+  *
+  *
+  *
  * The high-level scheduling layer that implements stage-oriented scheduling. It computes a DAG of
  * stages for each job, keeps track of which RDDs and stage outputs are materialized, and finds a
  * minimal schedule to run the job. It then submits stages as TaskSets to an underlying

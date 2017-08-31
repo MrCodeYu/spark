@@ -204,7 +204,9 @@ private[deploy] class Master(
   }
 
   override def receive: PartialFunction[Any, Unit] = {
+
     case ElectedLeader =>
+      // 主备切换入口
       val (storedApps, storedDrivers, storedWorkers) = persistenceEngine.readPersistedData(rpcEnv)
       state = if (storedApps.isEmpty && storedDrivers.isEmpty && storedWorkers.isEmpty) {
         RecoveryState.ALIVE
@@ -214,6 +216,9 @@ private[deploy] class Master(
       logInfo("I have been elected leader! New state: " + state)
       if (state == RecoveryState.RECOVERING) {
         // 重要： 在这个方法中恢复app，driver，worker
+        // 一、恢复Application：
+        // 二、恢复Driver：将driverInfo加入到drivers内存结构中
+        // 三、恢复Worker
         beginRecovery(storedApps, storedDrivers, storedWorkers)
         // 在接收到app（driver发来的消息）的消息和Worker的消息后（会改变他们的状态），
         // 发送消息CompleteRecovery给自己
@@ -563,7 +568,9 @@ private[deploy] class Master(
     state = RecoveryState.COMPLETING_RECOVERY
 
     // Kill off any workers and apps that didn't respond to us.
-    // 过滤掉状态还是UNKNOWN的worker和app，将他们从内存中删除
+    // 因为之前开始恢复的时候，将所有的app，worker的状态改成UNKNOWN过滤掉状态还是UNKNOWN的worker和app，
+    // 将他们从内存中删除
+    // 总结清理机制，三点：1. 从内存缓存中移除  2. 从相关内村组件中移除 3. 从持久化存储中移除
     workers.filter(_.state == WorkerState.UNKNOWN).foreach(removeWorker)
     apps.filter(_.state == ApplicationState.UNKNOWN).foreach(finishApplication)
 

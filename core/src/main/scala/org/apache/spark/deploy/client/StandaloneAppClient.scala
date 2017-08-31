@@ -34,8 +34,10 @@ import org.apache.spark.rpc._
 import org.apache.spark.util.{RpcUtils, ThreadUtils}
 
 /**
+  * 接口，负责在standalone模式下，application和spark集群通信。
  * Interface allowing applications to speak with a Spark standalone cluster manager.
  *
+  * 接受一个master URL，一个application description，一个集群事件监听器，和各种事件发生时的监听器
  * Takes a master URL, an app description, and a listener for cluster events, and calls
  * back the listener when various events occur.
  *
@@ -271,6 +273,9 @@ private[spark] class StandaloneAppClient(
 
   def start() {
     // Just launch an rpcEndpoint; it will call back into the listener.
+    // 内部创建了 ClientEndpoint ，其实是 StandaloneAppClient 的内部类，会和 master 通信，
+    // 在构造时会首先调用 onStart() ，运行 registerWithMaster() -> tryRegisterAllMasters
+    // 向所有的 Master 注册。
     endpoint.set(rpcEnv.setupEndpoint("AppClient", new ClientEndpoint(rpcEnv)))
   }
 
