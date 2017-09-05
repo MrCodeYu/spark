@@ -228,7 +228,7 @@ object SparkEnv extends Logging {
     val securityManager = new SecurityManager(conf)
 
     val systemName = if (isDriver) driverSystemName else executorSystemName
-    //为 driver/Executor 创建rpcEnv
+    //为 driver/Executor 创建rpcEnv。整个Spark core 只有这一个RpcEnv(Master等自己外部脚本启动的除外)
     val rpcEnv = RpcEnv.create(systemName, hostname, port, conf, securityManager,
       clientMode = !isDriver)
 

@@ -238,21 +238,26 @@ private[deploy] class Master(
     case RegisterApplication(description, driver) =>
       // TODO Prevent repeated registrations from some driver
       if (state == RecoveryState.STANDBY) {
+        // 如果当前Master是standby，那么什么都不会干
         // ignore, don't send response
       } else {
         logInfo("Registering app " + description.name)
         val app = createApplication(description, driver)
         registerApplication(app)
         logInfo("Registered app " + description.name + " with ID " + app.id)
+        // 将ApplicationInfo加入到持久化引擎（例如Zookeeper）中
         persistenceEngine.addApplication(app)
+        // 给driver发信息
         driver.send(RegisteredApplication(app.id, self))
         schedule()
       }
 
     case ExecutorStateChanged(appId, execId, state, message, exitStatus) =>
+      // 从app的信息中，找到对应的executor
       val execOption = idToApp.get(appId).flatMap(app => app.executors.get(execId))
       execOption match {
         case Some(exec) =>
+          // 如果找到这个executor
           val appInfo = idToApp(appId)
           val oldState = exec.state
           exec.state = state
@@ -263,6 +268,7 @@ private[deploy] class Master(
             appInfo.resetRetryCount()
           }
 
+          // 通知driver，这个executor的状态改变了
           exec.application.driver.send(ExecutorUpdated(execId, state, message, exitStatus, false))
 
           if (ExecutorState.isFinished(state)) {
@@ -275,6 +281,7 @@ private[deploy] class Master(
             }
             exec.worker.removeExecutor(exec)
 
+            // 如果executor的推出是非正常的
             val normalExit = exitStatus == Some(0)
             // Only retry certain number of times so we don't go into an infinite loop.
             // Important note: this code path is not exercised by tests, so be very careful when
@@ -297,6 +304,7 @@ private[deploy] class Master(
 
     case DriverStateChanged(driverId, state, exception) =>
       state match {
+          // 如果Driver的状态是，错误，完成，杀掉，失败，就移除driver
         case DriverState.ERROR | DriverState.FINISHED | DriverState.KILLED | DriverState.FAILED =>
           removeDriver(driverId, state, exception)
         case _ =>
@@ -670,6 +678,8 @@ private[deploy] class Master(
 
     // Keep launching executors until no more workers can accommodate any
     // more executors, or if we have reached this application's limits
+    // 写法相当于(0 until 有多少个worker).filter(pos => canLaunchExecutor(pos))
+    // 这个方法返回的是，可以启动Executor的Worker的index
     var freeWorkers = (0 until numUsable).filter(canLaunchExecutor)
 
     /**
@@ -710,6 +720,13 @@ private[deploy] class Master(
       * 每一轮分配都是为每个Worker上的Executor分配1（或minCoresPerExecutor）个CPU，
       * 第二轮又为所有有剩余CPU的Worker的Executor分配1个（或minCoresPerExecutor）CPU，
       * 这个过程一直循环下去，知道所有Worker的所有CPU被分配完（Worker所有CPU被分配完或者剩余的CPU不足以启动一个Executor）
+      *
+      * for(还有没有worker可以分配executor){
+      *   for（1号worker，2号worker）{
+      *     给它分配的CPU+minCoresPerExecutor
+      *   }
+      *   freeworker下标列表.filter（判断这个列表中是否可以再分配executor）
+      * }
       *
       */
     while (freeWorkers.nonEmpty) {
@@ -811,7 +828,7 @@ private[deploy] class Master(
     * 为当前等待的apps调度可用的资源。schedule()在每次新的app加入或者资源情况变动时调用。
    */
   private def schedule(): Unit = {
-    // 必须判断当前的Master是否为活着的Master。就算是刚恢复的Master，在调用schedule()方法之前
+    // 必须判断当前的Master是否为ALIVE的Master。就算是刚恢复的Master，在调用schedule()方法之前
     // 也已经在completeRecovery()中将状态设置为ALIVE
     if (state != RecoveryState.ALIVE) {
       return
@@ -828,6 +845,8 @@ private[deploy] class Master(
       * 首先调度driver：
       * 什么情况下会注册并且调度Driver？yarn-cluster模式。
       * 因为standalone模式和yarn-client模式会直接在本地启动Driver，而不会来注册Driver，更不用让Master来调度Driver。
+      *
+      * 功能：让Worker启动Driver。
        */
     for (driver <- waitingDrivers.toList) { // iterate over a copy of waitingDrivers
       // We assign workers to each waiting driver in a round-robin fashion. For each driver, we
@@ -842,7 +861,7 @@ private[deploy] class Master(
         numWorkersVisited += 1
         // 如果这个worker的空余memory大于等于driver需要的memory && 如果这个worker的空余cpu大于等于driver需要的cpu
         if (worker.memoryFree >= driver.desc.mem && worker.coresFree >= driver.desc.cores) {
-          // 让WorkerInfo和DriverInfo互相引用，并给Worker发消息启动Driver。
+          // 启动Driver：将DriverInfo和WorkerInfo加入对方内存信息，并给Worker发消息启动Driver。
           launchDriver(worker, driver)
           // 将启动的driver重内存结构waitingDrivers中删除掉
           waitingDrivers -= driver
@@ -950,10 +969,13 @@ private[deploy] class Master(
     }
 
     applicationMetricsSystem.registerSource(app.appSource)
+    // 将app信息加入到内存缓存中
     apps += app
     idToApp(app.id) = app
-    endpointToApp(app.driver) = app
-    addressToApp(appAddress) = app
+    endpointToApp(app.driver) = app // endpointToApp: driver的endpoint地址
+    addressToApp(appAddress) = app // addressToApp：driver的rpcAddress
+
+    // 将 app 加入到等待调度的队列 waitingApps
     waitingApps += app
   }
 
@@ -1115,7 +1137,7 @@ private[deploy] class Master(
 
   private def launchDriver(worker: WorkerInfo, driver: DriverInfo) {
     logInfo("Launching driver " + driver.id + " on worker " + worker.id)
-    // 将DriverInfo加入到这个worker的内存结构中
+    // 将DriverInfo加入到这个worker的内存结构中，并把driver用的CPU和内存数量加入到Worker的CPU和内存信息中。
     worker.addDriver(driver)
     // 将WokerInfo加入到Driver中
     driver.worker = Some(worker)
@@ -1129,19 +1151,28 @@ private[deploy] class Master(
       driverId: String,
       finalState: DriverState,
       exception: Option[Exception]) {
+    // 根据driverId去找driver
     drivers.find(d => d.id == driverId) match {
       case Some(driver) =>
         logInfo(s"Removing driver: $driverId")
+        // driver从内存缓存中删除
         drivers -= driver
         if (completedDrivers.size >= RETAINED_DRIVERS) {
           val toRemove = math.max(RETAINED_DRIVERS / 10, 1)
           completedDrivers.trimStart(toRemove)
         }
+        // 向completedDrivers中加入driver信息
         completedDrivers += driver
+        // 从持久化引擎中移除driver信息
         persistenceEngine.removeDriver(driver)
+        // 设置driver状态
         driver.state = finalState
         driver.exception = exception
+
+        // 获得driver所在的worker，将driver信息从worker上移除
         driver.worker.foreach(w => w.removeDriver(driver))
+
+        // 调用schedule()
         schedule()
       case None =>
         logWarning(s"Asked to remove unknown driver: $driverId")

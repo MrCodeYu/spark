@@ -189,6 +189,7 @@ private[deploy] class Worker(
 
     val scheme = if (webUi.sslOptions.enabled) "https" else "http"
     workerWebUiUrl = s"$scheme://$publicAddress:${webUi.boundPort}"
+    // Worker 启动的时候自动向Master注册
     registerWithMaster()
 
     metricsSystem.registerSource(workerSource)
@@ -698,6 +699,7 @@ private[deploy] object Worker extends Logging {
     Utils.initDaemon(log)
     val conf = new SparkConf
     val args = new WorkerArguments(argStrings, conf)
+    // 构造Worker的rpcEnv
     val rpcEnv = startRpcEnvAndEndpoint(args.host, args.port, args.webUiPort, args.cores,
       args.memory, args.masters, args.workDir, conf = conf)
     rpcEnv.awaitTermination()
@@ -719,6 +721,7 @@ private[deploy] object Worker extends Logging {
     val securityMgr = new SecurityManager(conf)
     val rpcEnv = RpcEnv.create(systemName, host, port, conf, securityMgr)
     val masterAddresses = masterUrls.map(RpcAddress.fromSparkURL(_))
+    // 构造Worker的Endpoint地址，new Worker时，再Worker的onStart()中向Master注册。
     rpcEnv.setupEndpoint(ENDPOINT_NAME, new Worker(rpcEnv, webUiPort, cores, memory,
       masterAddresses, ENDPOINT_NAME, workDir, conf, securityMgr))
     rpcEnv
