@@ -114,6 +114,7 @@ private[deploy] class DriverRunner(
 
         finalState = Some(state)
 
+        // 向Worker发送信息 DriverStateChanged
         worker.send(DriverStateChanged(driverId, state, finalException))
       }
     }.start()
@@ -153,6 +154,7 @@ private[deploy] class DriverRunner(
     val localJarFile = new File(driverDir, jarFileName)
     val localJarFilename = localJarFile.getAbsolutePath
 
+    // 如果jar不存在于本地目录，下载
     if (!localJarFile.exists()) { // May already exist if running multiple workers on one node
       logInfo(s"Copying user jar $jarPath to $destPath")
       Utils.fetchFile(
@@ -165,6 +167,7 @@ private[deploy] class DriverRunner(
         useCache = false)
     }
 
+    // 如果下载完了还是不在本地目录，抛出异常
     if (!localJarFile.exists()) { // Verify copy succeeded
       throw new Exception(s"Did not see expected jar $jarFileName in $driverDir")
     }

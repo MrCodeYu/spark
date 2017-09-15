@@ -637,6 +637,7 @@ private[deploy] class Master(
     // worker会将所有的cpu分配给application，之启动一个executor
     // 如果一个worker 30个free core，我们设置spark.cores.executor=10，那么必定会在这个Worekr上启动3个Executor
     val oneExecutorPerWorker = coresPerExecutor.isEmpty
+    // spark.executor.memory,SPARK_EXECUTOR_MEMORY,SPARK_MEM都不设置，就是1024MB
     val memoryPerExecutor = app.desc.memoryPerExecutorMB
     val numUsable = usableWorkers.length
     // 每个worker分配的CPU熟练
@@ -650,7 +651,7 @@ private[deploy] class Master(
     /** Return whether the specified worker can launch an executor for this app. */
     // 返回制定的worker是否可以为当前app启动一个executor
     def canLaunchExecutor(pos: Int): Boolean = {
-      // 在不设置spark.core.executor的情况下，minCoresPerExecutor为1：现有的CPU>1，继续调度
+      // 在不设置spark.core.executor的情况下，minCoresPerExecutor为1：现有的CPU>1，继续调度;如果设置，就是spark.core.executor
       val keepScheduling = coresToAssign >= minCoresPerExecutor
       // ①当前Worker的free的CPU数-当前Worker已经分配的CPU数>=1 ： 当前Worker还有CPU可以分配
       // ②如果spark.cores.executor的值是设置了的，那么每次进这个方法，就要启动一个executor，如果这个worker上
@@ -663,6 +664,7 @@ private[deploy] class Master(
       val launchingNewExecutor = !oneExecutorPerWorker || assignedExecutors(pos) == 0
       if (launchingNewExecutor) {
         val assignedMemory = assignedExecutors(pos) * memoryPerExecutor
+        // 在这里，内存只是一个判断条件，最终返回得只是CPU得信息
         val enoughMemory = usableWorkers(pos).memoryFree - assignedMemory >= memoryPerExecutor
         // 本次分配的executor数量+app已经获得的executor的数量<app总共的executor的数量限制
         val underLimit = assignedExecutors.sum + app.executors.size < app.executorLimit

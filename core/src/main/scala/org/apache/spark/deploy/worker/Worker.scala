@@ -655,9 +655,12 @@ private[deploy] class Worker(
         logDebug(s"Driver $driverId changed state to $state")
     }
     sendToMaster(driverStateChanged)
+    // 将driver从drivers内存结构中移除
     val driver = drivers.remove(driverId).get
+    // 加入到 finishedDrivers 内存结构中
     finishedDrivers(driverId) = driver
     trimFinishedDriversIfNecessary()
+    // 从Worker资源中减去这个driver曾经占用的资源
     memoryUsed -= driver.driverDesc.mem
     coresUsed -= driver.driverDesc.cores
   }

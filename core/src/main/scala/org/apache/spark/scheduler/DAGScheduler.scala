@@ -308,14 +308,15 @@ class DAGScheduler(
       case Some(stage) => stage
       case None =>
         // We are going to register ancestor shuffle dependencies
-        // 注册shuffleDep.rdd的父stage们到shuffleToMapStage结构中
+        // 1. 将shuffleDep.rdd对应stage的父stage们到shuffleToMapStage结构中
         getAncestorShuffleDependencies(shuffleDep.rdd).foreach { dep =>
           if (!shuffleToMapStage.contains(dep.shuffleId)) {
             shuffleToMapStage(dep.shuffleId) = newOrUsedShuffleStage(dep, firstJobId)
           }
         }
         // Then register current shuffleDep
-        // 创建shuffleDep.rdd的stage，注册到shuffleToMapStage中
+        // 2. 将shuffleDep.rdd自己的stage，注册到shuffleToMapStage中
+        // 此时，所有的stage都已经注册到了shuffleToMapStage中
         val stage = newOrUsedShuffleStage(shuffleDep, firstJobId)
         shuffleToMapStage(shuffleDep.shuffleId) = stage
         stage
@@ -501,6 +502,7 @@ class DAGScheduler(
         val rddHasUncachedPartitions = getCacheLocs(rdd).contains(Nil)
         // 如果这个RDD没有缓存过
         if (rddHasUncachedPartitions) {
+          // 遍历rdd的依赖
           for (dep <- rdd.dependencies) {
             dep match {
               case shufDep: ShuffleDependency[_, _, _] =>
@@ -824,7 +826,8 @@ class DAGScheduler(
    * Check for waiting stages which are now eligible for resubmission.
    * Ordinarily run on every iteration of the event loop.
    */
-  private def submitWaitingStages() {
+  private def
+  submitWaitingStages() {
     // TODO: We might want to run this less often, when we are sure that something has become
     // runnable that wasn't before.
     logTrace("Checking for newly runnable parent stages")
@@ -956,7 +959,7 @@ class DAGScheduler(
     listenerBus.post(
       SparkListenerJobStart(job.jobId, jobSubmissionTime, stageInfos, properties))
     // 使用submitStage(finalStage)提交finalStage
-    // 这个方法的调用会导致第一个stage提交，
+    // 这个方法的调用会导致第一个stage(没有父stage得stage们)提交，
     // 主要目的：把所有的stage都放入到waitingStages内存结构中
     submitStage(finalStage)
 
@@ -1010,7 +1013,10 @@ class DAGScheduler(
   }
 
   /** Submits stage, but first recursively submits any missing parents.
-    *调用getMissingParentStages方法来获取当前这个stage的父stage的父stage
+    * 提交stage，首先用 递归 提交所有any missing 父 stage
+    * 调用getMissingParentStages方法来获取当前这个stage的所有父stage（从textfile的第一个stage到最后一个finalstage）
+    *
+    * 注意 是找到所有的父stages（包括父stage的父stage以及更往上的stage......）
     */
   private def submitStage(stage: Stage) {
     // 找到stage对应的jobId
@@ -1026,6 +1032,7 @@ class DAGScheduler(
           logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
           submitMissingTasks(stage, jobId.get)
         } else {
+          // 递归
           // 如果stage还存在父stage，循环遍历父stage们，递归调用submitStage方法，
           // 将所有父stage加入到waitingStages结构中
           for (parent <- missing) {

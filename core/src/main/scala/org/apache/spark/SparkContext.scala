@@ -1871,6 +1871,7 @@ class SparkContext(config: SparkConf) extends Logging with ExecutorAllocationCli
    * handler function. This is the main entry point for all actions in Spark.
     *
     * 在RDD中给定的一组分区上运行一个函数，并将结果传递给给定的处理函数。这是所有Spark的actions的主入口。
+    * @param rdd: 触发action那个rdd
    */
   def runJob[T, U: ClassTag](
       rdd: RDD[T],
