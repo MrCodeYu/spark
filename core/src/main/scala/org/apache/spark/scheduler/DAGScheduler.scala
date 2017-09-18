@@ -959,11 +959,11 @@ class DAGScheduler(
     listenerBus.post(
       SparkListenerJobStart(job.jobId, jobSubmissionTime, stageInfos, properties))
     // 使用submitStage(finalStage)提交finalStage
-    // 这个方法的调用会导致第一个stage(没有父stage得stage们)提交，
-    // 主要目的：把所有的stage都放入到waitingStages内存结构中
+    // 这个方法的调用会导致第一个stage提交，
+    // 主要目的：提交第一个stage，并且把所有的stage都放入到waitingStages内存结构中
     submitStage(finalStage)
 
-    // 提交等待的stage
+    // 提交所有等待的stage
     submitWaitingStages()
   }
 
@@ -1015,8 +1015,9 @@ class DAGScheduler(
   /** Submits stage, but first recursively submits any missing parents.
     * 提交stage，首先用 递归 提交所有any missing 父 stage
     * 调用getMissingParentStages方法来获取当前这个stage的所有父stage（从textfile的第一个stage到最后一个finalstage）
-    *
     * 注意 是找到所有的父stages（包括父stage的父stage以及更往上的stage......）
+    *
+    * 功能：导致第一个stage提交，并且将所有的子孙stage加入到waitingStages中
     */
   private def submitStage(stage: Stage) {
     // 找到stage对应的jobId
@@ -1047,7 +1048,7 @@ class DAGScheduler(
   }
 
   /** Called when stage's parents are available and we can now do its task. */
-  // 在这个stage的父stage们都已经完成，我们就开始运行这个stage的task
+  // 在这个stage的父stage们都已经完成，我们就开始运行这个stage的task！
   // 提交stage，为stage创建task，task数量跟partition数量相同
   // job在第一次运行的时候，传入的就是最初的那个stage
   private def submitMissingTasks(stage: Stage, jobId: Int) {
@@ -1085,13 +1086,14 @@ class DAGScheduler(
     val taskIdToLocations: Map[Int, Seq[TaskLocation]] = try {
       stage match {
         case s: ShuffleMapStage =>
-          // id：partition id
+          // id：partition id，id是从0到partitionNumber的一个数字
           // stage.rdd:stage最后一个rdd
           // 判断stage最后一个rdd的某个task的最佳位置：判断这个rdd的partition是否cache，若没有cache是否checkpoint，
           // 若没有checkpoint寻找partition的父partition是否cache或checkpoint，递归往前找，如果找到有cache或checkpoint，
           // 返回这个partition的最佳位置给stage最后一个rdd的这个partition用。返回(partitionId,Seq(loc))
           partitionsToCompute.map { id => (id, getPreferredLocs(stage.rdd, id))}.toMap
         case s: ResultStage =>
+          // 如果不是ShuffleMapStage，那创建的就是ResultTask
           val job = s.activeJob.get
           partitionsToCompute.map { id =>
             val p = s.partitions(id)
